@@ -13,8 +13,21 @@
 #include "tcp_server.h"
 #include "reactor_buf.h"
 
+struct message{
+	char data[m4K];
+	char len;
+};
+struct message msg;
 
-tcp_server::tcp_server(const char *ip,uint16_t port)
+void server_rd_callback(event_loop *loop,int fd,void *args);
+void server_wt_callback(event_loop *loop,int fd,void *args);
+
+void accept_callback(event_loop *loop,int fd,void *args){
+	tcp_server *server = (tcp_server*)args;
+	server->do_accept();
+}
+
+tcp_server::tcp_server(event_loop* loop,const char *ip,uint16_t port)
 {
 	bzero(&_connaddr,sizeof(_connaddr));
 	 //忽略一些信号 SIGHUP, SIGPIPE
@@ -31,6 +44,7 @@ tcp_server::tcp_server(const char *ip,uint16_t port)
 		fprintf(stderr,"tcp_server::socket()\n");
 		exit(1);
 	}
+	
 	struct sockaddr_in server_addr;
 	bzero(&server_addr,sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
@@ -43,15 +57,77 @@ tcp_server::tcp_server(const char *ip,uint16_t port)
 		fprintf(stderr,"setsocket SO_REUSEADDR\n");
 	}
 	
-	if(bind(_sockfd,(const struct sockaddr*)&server_addr,sizeof(server_addr)) < 0){
-		fprintf(stderr,"bind error\n");
-		exit(1);
-	}
+	if (bind(_sockfd, (const struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
+        fprintf(stderr, "bind error\n");
+        exit(1);
+    }
 	if(listen(_sockfd,500) == -1){
 		fprintf(stderr,"listen error\n");
 		exit(1);
 	}
+	
+	_loop = loop;
+	_loop->add_io_event(_sockfd,accept_callback,EPOLLIN,this);
 }
+
+
+void server_rd_callback(event_loop *loop,int fd,void *args){
+	int ret = 0 ;
+	struct message *msg = (struct message*)args;
+	input_buf ibuf;
+	
+	ret = ibuf.read_data(fd);
+	if(ret == -1){
+		fprintf(stderr, "ibuf read_data error\n");
+        //删除事件
+		loop->del_io_event(fd);
+		//对端关闭
+		close(fd);
+		return;
+	}if(ret == 0){
+		//删除事件
+		loop->del_io_event(fd);
+		//对端关闭
+		close(fd);
+		return ;
+	}
+	printf("ibuf.length() = %d\n", ibuf.length());
+	//将读到的数据放在msg中
+	msg->len = ibuf.length();
+	bzero(msg->data, msg->len);
+	memcpy(msg->data, ibuf.data(), msg->len);
+	
+	ibuf.pop(msg->len);
+	ibuf.adjust();
+	printf("recv data = %s\n", msg->data);
+	//删除读事件，添加写事件
+	loop->del_io_event(fd, EPOLLIN);
+	loop->add_io_event(fd, server_wt_callback, EPOLLOUT, msg);
+}
+
+
+void server_wt_callback(event_loop *loop,int fd,void *args){
+	struct message *msg = (struct message*)args;
+	output_buf obuf;
+	obuf.send_data(msg->data, msg->len);
+	while(obuf.length()) {
+		int write_ret = obuf.write2fd(fd);
+		if (write_ret == -1) {
+			fprintf(stderr, "write connfd error\n");
+			return;
+		}
+		else if(write_ret == 0) {
+			//不是错误，表示此时不可写
+			break;
+		}
+	}
+
+    //删除写事件，添加读事件
+	loop->del_io_event(fd, EPOLLOUT);
+	loop->add_io_event(fd, server_rd_callback, EPOLLIN, msg);
+}
+
+
 
 void tcp_server::do_accept()
 {
@@ -73,6 +149,8 @@ void tcp_server::do_accept()
 				exit(1);
 			}
 		}else{
+			this->_loop->add_io_event(connfd, server_rd_callback, EPOLLIN, &msg);
+            break;
 //			int writed;
 //			char *data = "hello lyh\n";
 //			do{
@@ -85,46 +163,46 @@ void tcp_server::do_accept()
 //                writed = 0; //不是错误，仅返回0表示此时不可继续写
 //            }
 
-			int ret = 0;
-			input_buf ibuf;
-			output_buf obuf;
-			
-			char *msg = NULL;
-			int msg_len = 0;
-			do{
-				ret = ibuf.read_data(connfd);
-				if(ret == -1){
-					fprintf(stderr, "ibuf read_data error\n");
-                    break;
-				}
-				printf("ibuf.length() = %d\n", ibuf.length());
-				
-				//将读到的数据放在msg中
-                msg_len = ibuf.length();
-                msg = (char*)malloc(msg_len);
-                bzero(msg, msg_len);
-				memcpy(msg, ibuf.data(), msg_len);
-                ibuf.pop(msg_len);
-                ibuf.adjust();
-				printf("recv data = %s\n", msg);
-				
-				obuf.send_data(msg, msg_len);
-				while(obuf.length()){
-					int write_ret = obuf.write2fd(connfd);
-                    if (write_ret == -1) {
-                        fprintf(stderr, "write connfd error\n");
-                        return;
-                    }
-                    else if(write_ret == 0) {
-                        //不是错误，表示此时不可写
-                        break;
-                    }
-				}
-				
-				free(msg);
-			}while(ret != 0);
-			
-			close(connfd);
+//			int ret = 0;
+//			input_buf ibuf;
+//			output_buf obuf;
+//			
+//			char *msg = NULL;
+//			int msg_len = 0;
+//			do{
+//				ret = ibuf.read_data(connfd);
+//				if(ret == -1){
+//					fprintf(stderr, "ibuf read_data error\n");
+//                    break;
+//				}
+//				printf("ibuf.length() = %d\n", ibuf.length());
+//				
+//				//将读到的数据放在msg中
+//                msg_len = ibuf.length();
+//                msg = (char*)malloc(msg_len);
+//                bzero(msg, msg_len);
+//				memcpy(msg, ibuf.data(), msg_len);
+//                ibuf.pop(msg_len);
+//                ibuf.adjust();
+//				printf("recv data = %s\n", msg);
+//				
+//				obuf.send_data(msg, msg_len);
+//				while(obuf.length()){
+//					int write_ret = obuf.write2fd(connfd);
+//                    if (write_ret == -1) {
+//                        fprintf(stderr, "write connfd error\n");
+//                        return;
+//                    }
+//                    else if(write_ret == 0) {
+//                        //不是错误，表示此时不可写
+//                        break;
+//                    }
+//				}
+//				
+//				free(msg);
+//			}while(ret != 0);
+//			
+//			close(connfd);
 		}
 	}
 }
