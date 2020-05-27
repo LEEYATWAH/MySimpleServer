@@ -12,6 +12,7 @@
 
 #include "tcp_server.h"
 #include "reactor_buf.h"
+#include "tcp_conn.h"
 
 struct message{
 	char data[m4K];
@@ -149,8 +150,16 @@ void tcp_server::do_accept()
 				exit(1);
 			}
 		}else{
-			this->_loop->add_io_event(connfd, server_rd_callback, EPOLLIN, &msg);
-            break;
+			
+			tcp_conn *conn = new tcp_conn(connfd,_loop);
+			if(conn == NULL){
+				fprintf(stderr, "new tcp_conn error\n");
+				exit(1);
+			}
+			printf("get new connection succ!\n");
+			break;
+//			this->_loop->add_io_event(connfd, server_rd_callback, EPOLLIN, &msg);
+//            break;
 //			int writed;
 //			char *data = "hello lyh\n";
 //			do{
