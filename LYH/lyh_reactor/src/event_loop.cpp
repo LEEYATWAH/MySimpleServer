@@ -63,7 +63,7 @@ void event_loop::add_io_event(int fd,io_callback *proc,int mask,void *args){
 		op = EPOLL_CTL_ADD;
 	}else{
 		//如果有操作就是MOD
-		final_mask = mask;
+		final_mask = it->second.mask | mask;
 		op = EPOLL_CTL_MOD;
 	}
 	
