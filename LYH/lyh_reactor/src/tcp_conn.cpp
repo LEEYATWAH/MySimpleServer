@@ -8,6 +8,7 @@
 
 #include "tcp_conn.h"
 #include "message.h"
+#include "tcp_server.h"
 
 
 void callback_busi(const char *data,uint32_t len,int msgid,void *args,tcp_conn *conn)
@@ -43,7 +44,7 @@ tcp_conn::tcp_conn(int connfd,event_loop *loop)
 	//将该连接读事件让event_loop监控
 	_loop->add_io_event(_connfd,conn_rd_callback,EPOLLIN,this);
 	//4 将该链接集成到对应的tcp_server中
-    //TODO
+  tcp_server::increase_conn(_connfd,this);
 }
 
 void tcp_conn::do_read()
@@ -150,7 +151,7 @@ void tcp_conn::clean_conn()
 {
 	//连接清理工作
 	//1 将该链接从tcp_server摘除掉    
-	//TODO 
+	tcp_server::decrease_conn(_connfd);
 	//2 将该链接从event_loop中摘除
 	_loop->del_io_event(_connfd);
 	ibuf.clear();

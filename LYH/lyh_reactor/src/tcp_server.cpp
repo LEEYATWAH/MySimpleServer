@@ -14,6 +14,46 @@
 #include "reactor_buf.h"
 #include "tcp_conn.h"
 
+
+//显示在线的连接资源信息
+tcp_conn ** tcp_server::conns = NULL;
+
+//最大连接个数
+int tcp_server::_max_conns = 0;
+
+//当前连接刻度
+int tcp_server::_curr_conns = 0;
+
+pthread_mutex_t tcp_server::_conns_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+//增加一个新的连接
+void tcp_server::increase_conn(int connfd, tcp_conn *conn)
+{
+	pthread_mutex_lock(&_conns_mutex);
+	conns[connfd] = conn;
+	_curr_conns++;
+	pthread_mutex_unlock(&_conns_mutex);
+}
+
+
+//减少一个新的连接
+void tcp_server::decrease_conn(int connfd)
+{
+	pthread_mutex_lock(&_conns_mutex);
+	conns[connfd] = NULL;
+	_curr_conns--;
+	pthread_mutex_unlock(&_conns_mutex);
+}
+
+// /得到当前的连接刻度
+void tcp_server::get_conn_num(int *curr_conn)
+{
+	pthread_mutex_lock(&_conns_mutex);
+	*curr_conn = _curr_conns;
+	pthread_mutex_unlock(&_conns_mutex);
+}
+
+
 struct message{
 	char data[m4K];
 	char len;
@@ -68,6 +108,17 @@ tcp_server::tcp_server(event_loop* loop,const char *ip,uint16_t port)
 	}
 	
 	_loop = loop;
+
+	//创建链接管理
+	_max_conns = MAX_CONNS;
+
+	conns = new tcp_conn*[_max_conns+3];//因为stdin,stdout,stderr被占用,再开fd一定从3开始
+	if(conns == NULL){
+		fprintf(stderr, "new conns[%d] error\n", _max_conns);
+        exit(1);
+	}
+
+
 	_loop->add_io_event(_sockfd,accept_callback,EPOLLIN,this);
 }
 
@@ -150,13 +201,22 @@ void tcp_server::do_accept()
 				exit(1);
 			}
 		}else{
-			
-			tcp_conn *conn = new tcp_conn(connfd,_loop);
-			if(conn == NULL){
-				fprintf(stderr, "new tcp_conn error\n");
-				exit(1);
+
+			int cur_conns ; 
+			get_conn_num(&cur_conns);
+
+			if(cur_conns >= _max_conns){
+				fprintf(stderr, "so many connections, max = %d\n", _max_conns);
+                close(connfd);
+			}else{	
+				tcp_conn *conn = new tcp_conn(connfd,_loop);
+				if(conn == NULL){
+					fprintf(stderr, "new tcp_conn error\n");
+					exit(1);
+				}
+				printf("get new connection succ!\n");
 			}
-			printf("get new connection succ!\n");
+			
 			break;
 //			this->_loop->add_io_event(connfd, server_rd_callback, EPOLLIN, &msg);
 //            break;
