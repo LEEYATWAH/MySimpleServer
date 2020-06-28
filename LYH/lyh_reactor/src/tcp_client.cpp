@@ -55,6 +55,12 @@ static void connection_delay(event_loop *loop,int fd, void *args)
         const char *msg = "hello lyh";
         int msgid = 1;
         cli->send_message(msg,strlen(msg),msgid); 
+
+        const char *msg2 = "hello leeyatwah!";
+        msgid = 2;
+        cli->send_message(msg2, strlen(msg2), msgid);
+
+
         loop->add_io_event(fd, read_callback, EPOLLIN, cli);
         if (cli->_obuf.length != 0) {
             //输出缓冲有数据可写
@@ -198,10 +204,13 @@ int tcp_client::do_read()
 
         _ibuf.pop(MESSAGE_HEAD_LEN);
 
-        if (_msg_callback != NULL) {
-        printf(_ibuf.data);
-            this->_msg_callback(_ibuf.data + _ibuf.head, length, msgid, this, NULL);
-        }
+        this->_router.call(msgid, length, _ibuf.data + _ibuf.head, this);
+
+
+        // if (_msg_callback != NULL) {
+        // printf(_ibuf.data);
+        //     this->_msg_callback(_ibuf.data + _ibuf.head, length, msgid, this, NULL);
+        // }
         _ibuf.pop(length);
     }
 

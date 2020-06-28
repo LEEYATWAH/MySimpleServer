@@ -80,7 +80,8 @@ void tcp_conn::do_read()
 		ibuf.pop(MESSAGE_HEAD_LEN);
 		//处理ibuf.data()业务数据
 		printf("read data: %s\n", ibuf.data());
-		callback_busi(ibuf.data(),head.msglen,head.msgid,NULL,this);
+		tcp_server::router.call(head.msgid, head.msglen, ibuf.data(), this);
+	//	callback_busi(ibuf.data(),head.msglen,head.msgid,NULL,this);
 		
 		//消息体处理完了,往后便宜msglen长度
 		ibuf.pop(head.msglen);

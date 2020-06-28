@@ -3,7 +3,7 @@
 #include <netinet/in.h>
 #include "event_loop.h"
 #include "tcp_conn.h"
-
+#include "message.h"
 
 class tcp_server
 {
@@ -36,4 +36,10 @@ private:
 	static int _curr_conns;//当前连接数
 	static pthread_mutex_t _conns_mutex;//保护修改当前连接数
 
+
+public:
+	static msg_router router;
+	void add_msg_router(int msgid,msg_callback *cb,void *user_data = NULL){
+		router.register_msg_router(msgid,cb,user_data);
+	}
 };

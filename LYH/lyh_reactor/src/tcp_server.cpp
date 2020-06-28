@@ -26,6 +26,10 @@ int tcp_server::_curr_conns = 0;
 
 pthread_mutex_t tcp_server::_conns_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+
+msg_router tcp_server::router;
+
+
 //增加一个新的连接
 void tcp_server::increase_conn(int connfd, tcp_conn *conn)
 {

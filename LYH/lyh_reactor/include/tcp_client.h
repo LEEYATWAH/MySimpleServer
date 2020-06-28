@@ -7,8 +7,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "net_connection.h"
 
-class tcp_client
+class tcp_client:public net_connection
 {
 public:
 	tcp_client(event_loop *loop, const char *ip, unsigned short port,  const char *name);
@@ -45,4 +46,14 @@ private:
     //当前客户端的名称 用户记录日志
 	const char *_name;
 	msg_callback *_msg_callback;
+
+
+public:
+	void add_msg_router(int msgid, msg_callback *cb, void *user_data = NULL) {
+        _router.register_msg_router(msgid, cb, user_data);
+    }
+    
+
+private:
+	msg_router _router;
 };
