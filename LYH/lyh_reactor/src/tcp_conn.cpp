@@ -40,7 +40,11 @@ tcp_conn::tcp_conn(int connfd,event_loop *loop)
 	  //2. 设置TCP_NODELAY禁止做读写缓存，降低小包延迟,启动TCP_NODELAY，就意味着禁用了Nagle算法，允许小包的发送
 	int op = 1;
 	setsockopt(_connfd,IPPROTO_TCP, TCP_NODELAY,&op,sizeof(op));
-	
+// 如果用户注册了链接建立Hook 则调用
+  if (tcp_server::conn_start_cb) {
+    tcp_server::conn_start_cb(this, tcp_server::conn_start_cb_args);
+  }
+
 	//将该连接读事件让event_loop监控
 	_loop->add_io_event(_connfd,conn_rd_callback,EPOLLIN,this);
 	//4 将该链接集成到对应的tcp_server中
@@ -150,6 +154,12 @@ int tcp_conn::send_message(const char *data,int msglen,int msgid)
 
 void tcp_conn::clean_conn()
 {
+
+// 如果注册了链接销毁Hook函数，则调用
+  if (tcp_server::conn_close_cb) {
+    tcp_server::conn_close_cb(this, tcp_server::conn_close_cb_args);
+  }
+
 	//连接清理工作
 	//1 将该链接从tcp_server摘除掉    
 	tcp_server::decrease_conn(_connfd);

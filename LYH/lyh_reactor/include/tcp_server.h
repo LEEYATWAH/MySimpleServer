@@ -42,4 +42,24 @@ public:
 	void add_msg_router(int msgid,msg_callback *cb,void *user_data = NULL){
 		router.register_msg_router(msgid,cb,user_data);
 	}
+
+
+public:
+//设置创建hook函数
+	static conn_callback conn_start_cb;
+	static void *conn_start_cb_args;
+
+	static void set_conn_start(conn_callback cb,void *args = NULL){
+		conn_start_cb = cb;
+		conn_start_cb_args = args;
+	}
+
+	static conn_callback conn_close_cb;
+	static void *conn_close_cb_args;
+ 	//设置链接的销毁hook函数
+    static void set_conn_close(conn_callback cb, void *args = NULL) {
+        conn_close_cb = cb;
+        conn_close_cb_args = args;
+    }
+
 };

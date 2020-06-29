@@ -56,4 +56,27 @@ public:
 
 private:
 	msg_router _router;
+
+
+public:
+	//创建链接之后要触发的 回调函数
+    conn_callback _conn_start_cb;     
+    void * _conn_start_cb_args;
+	//设置链接的创建hook函数
+  	void set_conn_start(conn_callback cb, void *args = NULL) 
+    {
+        _conn_start_cb = cb;
+        _conn_start_cb_args = args;
+    }
+
+	
+    //销毁链接之前要触发的 回调函数
+    conn_callback _conn_close_cb;
+    void * _conn_close_cb_args;
+
+	//设置链接的销毁hook函数
+    void set_conn_close(conn_callback cb, void *args = NULL) {
+        _conn_close_cb = cb;
+        _conn_close_cb_args = args;
+    }
 };

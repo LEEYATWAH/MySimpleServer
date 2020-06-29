@@ -50,7 +50,11 @@ static void connection_delay(event_loop *loop,int fd, void *args)
         //连接建立成功
         cli->connected = true;
         printf("connect %s:%d succ!\n", inet_ntoa(cli->_server_addr.sin_addr), ntohs(cli->_server_addr.sin_port));
-
+        
+        //调用开发者注册的创建链接Hook函数
+        if (cli->_conn_start_cb != NULL) {
+            cli->_conn_start_cb(cli, cli->_conn_start_cb_args);
+        }
         //建立成功,发送sendmessage
         const char *msg = "hello lyh";
         int msgid = 1;
@@ -89,7 +93,10 @@ void tcp_client::do_connect()
     if(ret == 0){
        //链接创建成功      
         connected = true; 
-
+        //调用开发者客户端注册的创建链接之后的hook函数
+        if (_conn_start_cb != NULL) {
+            _conn_start_cb(this, _conn_start_cb_args);
+        }
         //注册读回调
         _loop->add_io_event(_sockfd, read_callback, EPOLLIN, this);
         //如果写缓冲去有数据，那么也需要触发写回调
@@ -269,6 +276,10 @@ void tcp_client::clean_conn()
     }
 
     connected = false;
+
+    if (_conn_close_cb != NULL) {
+        _conn_close_cb(this, _conn_close_cb_args);
+    }
 
     //重新连接
     this->do_connect();
