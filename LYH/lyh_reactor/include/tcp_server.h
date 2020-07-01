@@ -4,6 +4,7 @@
 #include "event_loop.h"
 #include "tcp_conn.h"
 #include "message.h"
+#include "thread_pool.h"
 
 class tcp_server
 {
@@ -62,4 +63,7 @@ public:
         conn_close_cb_args = args;
     }
 
+
+private:
+	thread_pool * _thread_pool;
 };
