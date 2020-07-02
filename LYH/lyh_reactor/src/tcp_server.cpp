@@ -14,6 +14,8 @@
 #include "reactor_buf.h"
 #include "tcp_conn.h"
 
+#include "config_file.h"
+
 
 //显示在线的连接资源信息
 tcp_conn ** tcp_server::conns = NULL;
@@ -123,7 +125,7 @@ tcp_server::tcp_server(event_loop* loop,const char *ip,uint16_t port)
 	_loop = loop;
 
 	//创建链接管理
-	_max_conns = MAX_CONNS;
+	_max_conns = _max_conns = config_file::instance()->GetNumber("reactor", "maxConn", 1024);
 
 	conns = new tcp_conn*[_max_conns+3];//因为stdin,stdout,stderr被占用,再开fd一定从3开始
 	if(conns == NULL){
@@ -132,7 +134,7 @@ tcp_server::tcp_server(event_loop* loop,const char *ip,uint16_t port)
 	}
 
 	//创建线程池
-	int thread_cnt = 3;//TODO 从配置文件中读取
+	int thread_cnt = config_file::instance()->GetNumber("reactor", "threadNum", 10);// 从配置文件中读取
     if (thread_cnt > 0) {
         _thread_pool = new thread_pool(thread_cnt);
         if (_thread_pool == NULL) {

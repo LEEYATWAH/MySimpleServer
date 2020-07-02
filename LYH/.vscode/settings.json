@@ -3,6 +3,8 @@
         "vector": "cpp",
         "array": "cpp",
         "string": "cpp",
-        "*.tcc": "cpp"
+        "*.tcc": "cpp",
+        "hash_map": "cpp",
+        "hash_set": "cpp"
     }
 }
