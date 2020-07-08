@@ -18,7 +18,7 @@ void read_callback(event_loop *loop,int fd,void *args)
 void udp_server::do_read()
 {
     while(true){
-        int pkg_len = recvfrom(_sockfd,_read_buf, sizeof(_read_buf), 0, (struct sockaddr *)&_client_addr, &_client_addrlen)
+        int pkg_len = recvfrom(_sockfd,_read_buf, sizeof(_read_buf), 0, (struct sockaddr *)&_client_addr, &_client_addrlen);
 
         if(pkg_len == -1){
            if (errno == EINTR) {

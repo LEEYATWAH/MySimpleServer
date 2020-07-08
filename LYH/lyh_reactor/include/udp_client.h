@@ -4,7 +4,7 @@
 #include "message.h"
 #include "event_loop.h"
 
-lass udp_client: public net_connection
+class udp_client: public net_connection
 {
 public:
     udp_client(event_loop *loop, const char *ip, uint16_t port);

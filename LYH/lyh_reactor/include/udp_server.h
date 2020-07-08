@@ -19,6 +19,7 @@ public:
 
     //处理消息业务
     void do_read();
+    
 private:  
   
     int _sockfd;
@@ -36,4 +37,4 @@ private:
     //消息路由分发
     msg_router _router;
 
-}
+};

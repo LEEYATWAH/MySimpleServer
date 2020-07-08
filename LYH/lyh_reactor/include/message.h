@@ -37,7 +37,7 @@ public:
 	}
 
 	void call(int msgid,uint32_t msglen,const char *data,net_connection *net_conn){
-		printf("call msgid = %d\n", msgid);
+		//printf("call msgid = %d\n", msgid);
 		if(_router.find(msgid) == _router.end()){
 			fprintf(stderr, "msgid %d is not register!\n", msgid);
             return;
@@ -46,7 +46,7 @@ public:
 		msg_callback *callback = _router[msgid];
 		void *user_data = _args[msgid];
         callback(data, msglen, msgid, net_conn, user_data);
-		printf("=======\n");
+		//printf("=======\n");
 	}
 private:
 //针对消息的路由分发,key为msgid,value为注册的回调业务函数;

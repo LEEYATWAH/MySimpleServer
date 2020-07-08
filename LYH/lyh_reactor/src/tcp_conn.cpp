@@ -83,7 +83,8 @@ void tcp_conn::do_read()
 		//头部处理完了，往后偏移MESSAGE_HEAD_LEN长度
 		ibuf.pop(MESSAGE_HEAD_LEN);
 		//处理ibuf.data()业务数据
-		printf("read data: %s\n", ibuf.data());
+		//暂时除去调试信息
+	//	printf("read data: %s\n", ibuf.data());
 		tcp_server::router.call(head.msgid, head.msglen, ibuf.data(), this);
 	//	callback_busi(ibuf.data(),head.msglen,head.msgid,NULL,this);
 		
@@ -119,7 +120,8 @@ void tcp_conn::do_write()
 
 int tcp_conn::send_message(const char *data,int msglen,int msgid)
 {
-	printf("server send_message: %s:%d, msgid = %d\n", data, msglen, msgid);
+	// 暂时除去调试信息
+	//printf("server send_message: %s:%d, msgid = %d\n", data, msglen, msgid);
 	bool active_epollout = false;
 	if(obuf.length() == 0){
 		//如果现在已经数据都发送完了，那么是一定要激活写事件的

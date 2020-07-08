@@ -90,5 +90,5 @@ thread_queue<task_msg>* thread_pool::get_thread()
         _index = 0; 
     }
 
-    return _queues[_index];
+    return _queues[_index++];
 }
