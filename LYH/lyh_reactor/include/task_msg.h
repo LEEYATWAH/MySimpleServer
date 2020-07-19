@@ -1,6 +1,9 @@
 #pragma once
 #include "event_loop.h"
 
+//定义异步任务回调函数类型
+typedef void (*task_func)(event_loop *loop, void *args);
+
 struct task_msg
 {
     enum TASK_TYPE

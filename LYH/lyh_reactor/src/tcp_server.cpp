@@ -132,7 +132,7 @@ tcp_server::tcp_server(event_loop* loop,const char *ip,uint16_t port)
 		fprintf(stderr, "new conns[%d] error\n", _max_conns);
         exit(1);
 	}
-
+	bzero(conns,sizeof(tcp_conn *)*(_max_conns+3));
 	//创建线程池
 	int thread_cnt = config_file::instance()->GetNumber("reactor", "threadNum", 10);// 从配置文件中读取
     if (thread_cnt > 0) {
