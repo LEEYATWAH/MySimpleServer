@@ -156,7 +156,10 @@ int tcp_client::send_message(const char *data, int msglen, int msgid)
     return 0;
 }
 
-
+int tcp_client::get_fd()
+{
+    return _sockfd;
+}
 //处理读业务
 int tcp_client::do_read()
 {

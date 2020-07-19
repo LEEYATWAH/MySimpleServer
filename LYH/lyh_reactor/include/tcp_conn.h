@@ -13,7 +13,7 @@ public:
 	void clean_conn();
 	
 	int send_message(const char *data,int msglen,int msgid);
-	
+	int get_fd();
 private:
 	int _connfd;
 	event_loop *_loop;

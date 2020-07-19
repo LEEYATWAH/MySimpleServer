@@ -14,6 +14,7 @@ class tcp_client:public net_connection
 public:
 	tcp_client(event_loop *loop, const char *ip, unsigned short port,  const char *name);
 	int send_message(const char *data, int msglen, int msgid);
+	int get_fd();
 	//创建链接
 	void do_connect();
 	//处理写业务

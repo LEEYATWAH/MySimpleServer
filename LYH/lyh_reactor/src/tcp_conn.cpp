@@ -51,6 +51,12 @@ tcp_conn::tcp_conn(int connfd,event_loop *loop)
   tcp_server::increase_conn(_connfd,this);
 }
 
+int tcp_conn::get_fd()
+{
+    return this->_connfd;
+}
+
+
 void tcp_conn::do_read()
 {
 	int ret = ibuf.read_data(_connfd);
